@@ -103,43 +103,6 @@ contract BSC_GenesisIndex is ERC20Upgradeable, OwnableUpgradeable, PausableUpgra
      * @return shares : amount of minted tokens
      */
 
-    function depositCustom(
-        uint8 tokenIn,
-        uint256 amountIn,
-        uint16[5] calldata percentagesWBTCSplit,
-        uint16[5] calldata percentagesWETHSplit,
-        address recipient
-    ) external whenNotPaused returns (uint256 shares) {
-        uint8 i = tokenIn;
-        require(i < 3);
-        require(amountIn > 0, "dx=0");
-        require(_getTotal(percentagesWBTCSplit) == 10000 && _getTotal(percentagesWETHSplit) == 10000, "!=100%");
-        TransferHelper.safeTransferFrom(tokens[i], msg.sender, address(this), amountIn);
-
-        approveAMM(i, amountIn, 5);
-        uint256 amountForBtc = amountIn * 7400 / 10000;
-        uint256 amountForEth = amountIn * 2600 / 10000;
-        uint256[5] memory splitsForBtc;
-        uint256[5] memory splitsForEth;
-
-        for (uint256 index = 0; index < 5;) {
-            splitsForBtc[index] = amountForBtc * percentagesWBTCSplit[index] / 10000;
-            splitsForEth[index] = amountForEth * percentagesWETHSplit[index] / 10000;
-            unchecked {
-                ++index;
-            }
-        }
-
-        uint256 dywBtc = swapWithParamsCustom(i, 1, splitsForBtc);
-        uint256 dywEth = swapWithParamsCustom(i, 2, splitsForEth);
-
-        _mint(
-            recipient,
-            shares = (dywBtc * multipliers[1] * getLatestPrice(1) + dywEth * multipliers[2] * getLatestPrice(2))
-                / getVirtualPrice()
-        );
-        emit Mint(recipient, dywBtc, dywEth,shares);
-    }
 
     /**
      * @notice Function to liquidate wETH and wBTC positions for usdc
